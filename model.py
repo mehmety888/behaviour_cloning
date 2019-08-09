@@ -8,6 +8,7 @@ import csv
 import cv2
 import numpy as np
 
+# read and store the lines from driving log
 lines = []
 with open('data/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
@@ -28,6 +29,7 @@ for line in lines:
         measurement = float(line[3])
         measurements.append(measurement)
     
+# flipping images and steering measurements
 augmented_images,augmented_measurements = [],[]
 for image,measurement in zip(images,measurements):
     augmented_images.append(image)
@@ -35,7 +37,7 @@ for image,measurement in zip(images,measurements):
     augmented_images.append(cv2.flip(image,1))
     augmented_measurements.append(measurement*-1.0)
 
-
+# convert measurements to numpy arrays as keras requires 
 X_train = np.array(augmented_images)
 y_train = np.array(augmented_measurements)
 
@@ -44,7 +46,10 @@ from keras.layers import Flatten,Dense,Lambda,Cropping2D,Dropout
 from keras.layers.convolutional import Conv2D
 
 model = Sequential()
-model.add(Lambda(lambda x: x/127.5 - 0.5, input_shape=(160,320,3)))
+# image normalization and mean centering
+model.add(Lambda(lambda x: x/255.0 - 0.5, input_shape=(160,320,3)))
+
+#remove irrelevant parts of the image
 model.add(Cropping2D(cropping = ((70,25),(0,0))))
 model.add(Conv2D(filters=24, kernel_size = (5,5), activation = "relu", subsample=(2, 2)))
 model.add(Conv2D(filters=36, kernel_size = (5,5), activation = "relu", subsample=(2, 2)))
